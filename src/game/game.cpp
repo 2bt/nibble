@@ -36,8 +36,7 @@ void draw_rect(Rect const& rect, uint8_t color) {
     int x2 = std::min<int>(rect.x + rect.w, fx::SCREEN_W);
     int y1 = std::max(rect.y, 0);
     int y2 = std::min<int>(rect.y + rect.h, fx::SCREEN_H);
-    uint8_t* p = fx::pixel_data();
-    p += y1 * fx::SCREEN_W + x1;
+    uint8_t* p = fx::pixels + y1 * fx::SCREEN_W + x1;
     for (int y = y1; y < y2; ++y) {
         uint8_t* q = p;
         for (int x = x1; x < x2; ++x) *q++ = color;

@@ -32,23 +32,15 @@ uint32_t const PALETTE[16] = {
 };
 
 uint8_t  button_bits;
-uint8_t  pixels[SCREEN_W * SCREEN_H];
 uint32_t pixels32[SCREEN_W * SCREEN_H];
 
 } // namespace
 
+uint8_t pixels[SCREEN_W * SCREEN_H];
+
 bool button_down(int b) {
     return (button_bits >> b) & 1;
 }
-void clear(uint8_t color) {
-    for (uint8_t& p : pixels) p = color;
-}
-void pixel(int x, int y, uint8_t color) {
-    if (x < 0 || x >= SCREEN_W) return;
-    if (y < 0 || y >= SCREEN_H) return;
-    pixels[y * SCREEN_W + x] = color;
-}
-uint8_t* pixel_data() { return pixels; }
 
 } // namespace fx
 

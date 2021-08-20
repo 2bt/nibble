@@ -7,7 +7,9 @@ namespace std {
     template <class T> T max(T const& x, T const& y) { return x > y ? x : y; }
 }
 template <class T> T abs(T const& x) { return x < 0 ? -x : x; }
-
+inline void memset(void* s, int c, int n) {
+    for (uint8_t* b = (uint8_t*) s; n--;) *b++ = c;
+}
 
 namespace fx {
     enum {
@@ -24,10 +26,19 @@ namespace fx {
         SCREEN_H = 128,
     };
 
-    bool     button_down(int b);
-    void     clear(uint8_t color);
-    void     pixel(int x, int y, uint8_t color);
-    uint8_t* pixel_data();
+    extern uint8_t pixels[SCREEN_W * SCREEN_H];
+
+    bool button_down(int b);
+
+    inline void clear(uint8_t color) {
+        memset(pixels, color, sizeof(pixels));
+    }
+
+    inline void pixel(int x, int y, uint8_t color) {
+        uint32_t q = x | y;
+        if (q & ~127) return;
+        pixels[y * SCREEN_W + x] = color;
+    }
 };
 
 
