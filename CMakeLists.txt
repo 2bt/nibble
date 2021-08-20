@@ -1,25 +1,26 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(nibble-games)
+project(nibble)
 
-add_compile_options(-std=c++17 -Wall -O2)
+#add_compile_options(-std=c++17 -Wall -O2)
+add_compile_options(-std=c++17 -Wall -Og -g)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL REQUIRED
     sdl2
     )
 
-add_executable(nibble-games
+add_executable(nibble
     src/fx.cpp
 
     src/game/game.cpp
     )
 
-target_include_directories(nibble-games PRIVATE
+target_include_directories(nibble PRIVATE
     ${SDL_INCLUDE_DIRS}
     src
     )
 
-target_link_libraries(nibble-games
+target_link_libraries(nibble
     ${SDL_LIBRARIES}
     )

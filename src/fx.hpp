@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <algorithm>
 
 
 namespace fx {
@@ -18,9 +19,10 @@ namespace fx {
         SCREEN_H = 128,
     };
 
-	bool button_down(int b);
-    void clear(uint8_t color);
-    void pixel(int x, int y, uint8_t color);
+    bool     button_down(int b);
+    void     clear(uint8_t color);
+    void     pixel(int x, int y, uint8_t color);
+    uint8_t* pixel_data();
 };
 
 

@@ -1,7 +1,5 @@
 #include <fx.hpp>
 #include "game.hpp"
-#include <algorithm>
-
 
 
 struct Rect {
@@ -33,30 +31,24 @@ struct Rect {
 };
 
 
-void draw_rect(bool filled, Rect const& rect, uint8_t color) {
-    int x2 = rect.x + rect.w;
-    int y2 = rect.y + rect.h;
-    if (filled) {
-        for (int y = rect.y; y < y2; ++y)
-        for (int x = rect.x; x < x2; ++x) fx::pixel(x, y, color);
-    }
-    else {
-        --x2;
-        --y2;
-        for (int x = rect.x; x <= x2; ++x) {
-            fx::pixel(x, rect.y, color);
-            fx::pixel(x, y2,     color);
-        }
-        for (int y = rect.y + 1; y < y2; ++y) {
-            fx::pixel(rect.x, y, color);
-            fx::pixel(x2,     y, color);
-        }
+void draw_rect(Rect const& rect, uint8_t color) {
+    int x1 = std::max(rect.x, 0);
+    int x2 = std::min<int>(rect.x + rect.w, fx::SCREEN_W);
+    int y1 = std::max(rect.y, 0);
+    int y2 = std::min<int>(rect.y + rect.h, fx::SCREEN_H);
+    uint8_t* p = fx::pixel_data();
+    p += y1 * fx::SCREEN_W + x1;
+    for (int y = y1; y < y2; ++y) {
+        uint8_t* q = p;
+        for (int x = x1; x < x2; ++x) *q++ = color;
+        p += fx::SCREEN_W;
     }
 }
 
 
-int tick;
-int x, y;
+int tick = 0;
+int x = 0;
+int y = 0;
 
 void game::init() {
 }
@@ -66,14 +58,15 @@ void game::update() {
     x += fx::button_down(fx::BTN_RIGHT) - fx::button_down(fx::BTN_LEFT);
     y += fx::button_down(fx::BTN_DOWN)  - fx::button_down(fx::BTN_UP);
 
+    x += 1;
+    x &= 127;
+
     ++tick;
-    fx::clear(7);
+    // fx::clear(7);
     for (int i = 0; i < 16; ++i) {
-        draw_rect(true, {i * 8, 0, 8, 128}, i);
+        draw_rect({i * 8, 0, 8, 128}, (tick + i) & 0xf);
     }
 
-
-    draw_rect(false, {x, y, 8, 8}, tick & 0xf);
-    draw_rect(true, {x + 2, y + 2, 4, 4}, tick & 0xf);
+    draw_rect({x, y, 8, 8}, 8);
 }
 

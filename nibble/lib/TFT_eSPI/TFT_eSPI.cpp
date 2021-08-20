@@ -394,7 +394,7 @@ void TFT_eSPI::init(uint8_t tc)
     #include "TFT_Drivers/R61581_Init.h"
 
 #elif defined (RM68140_DRIVER)
-	#include "TFT_Drivers/RM68140_Init.h"
+    #include "TFT_Drivers/RM68140_Init.h"
 
 #elif defined (ST7789_2_DRIVER)
     #include "TFT_Drivers/ST7789_2_Init.h"
@@ -470,7 +470,7 @@ void TFT_eSPI::setRotation(uint8_t m)
     #include "TFT_Drivers/R61581_Rotation.h"
 
 #elif defined (RM68140_DRIVER)
-	#include "TFT_Drivers/RM68140_Rotation.h"
+    #include "TFT_Drivers/RM68140_Rotation.h"
 
 #elif defined (ST7789_2_DRIVER)
     #include "TFT_Drivers/ST7789_2_Rotation.h"
@@ -866,6 +866,45 @@ void TFT_eSPI::pushRect(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *da
   // Function deprecated, remains for backwards compatibility
   // New pushImage() is better as it will crop partly off-screen image blocks
   pushImage(x, y, w, h, data);
+}
+
+
+void TFT_eSPI::push(uint16_t const* data) {
+  begin_tft_write();
+  uint32_t* d = (uint32_t*)data;
+  SPI1U1 = (255 << SPILMOSI) | (255 << SPILMISO);
+  for (uint32 i = 0; i < 128 * 128 / 16; ++i) {
+    SPI1W0 = *d++;
+    SPI1W1 = *d++;
+    SPI1W2 = *d++;
+    SPI1W3 = *d++;
+    SPI1W4 = *d++;
+    SPI1W5 = *d++;
+    SPI1W6 = *d++;
+    SPI1W7 = *d++;
+    SPI1CMD |= SPIBUSY;
+    while(SPI1CMD & SPIBUSY) {}
+  }
+  end_tft_write();
+}
+
+void TFT_eSPI::push(uint8_t const* data, uint16_t const* palette) {
+  begin_tft_write();
+  SPI1U1 = (255 << SPILMOSI) | (255 << SPILMISO);
+  for (uint32 i = 0; i < 128 * 128 / 16; ++i) {
+    SPI1W0 = palette[data[ 0]] | (palette[data[ 1]] << 16);
+    SPI1W1 = palette[data[ 2]] | (palette[data[ 3]] << 16);
+    SPI1W2 = palette[data[ 4]] | (palette[data[ 5]] << 16);
+    SPI1W3 = palette[data[ 6]] | (palette[data[ 7]] << 16);
+    SPI1W4 = palette[data[ 8]] | (palette[data[ 9]] << 16);
+    SPI1W5 = palette[data[10]] | (palette[data[11]] << 16);
+    SPI1W6 = palette[data[12]] | (palette[data[13]] << 16);
+    SPI1W7 = palette[data[13]] | (palette[data[15]] << 16);
+    data += 16;
+    SPI1CMD |= SPIBUSY;
+    while(SPI1CMD & SPIBUSY) {}
+  }
+  end_tft_write();
 }
 
 
@@ -1524,7 +1563,7 @@ void  TFT_eSPI::readRectRGB(int32_t x0, int32_t y0, int32_t w, int32_t h, uint8_
   uint8_t* buf565 = data + len;
 
   readRect(x0, y0, w, h, (uint16_t*)buf565);
-  
+
   while (len--) {
     uint16_t pixel565 = (*buf565++)<<8 | (*buf565++);
     uint8_t red   = (pixel565 & 0xF800) >> 8; red   |= red   >> 5;
@@ -3187,7 +3226,7 @@ uint16_t TFT_eSPI::alphaBlend(uint8_t alpha, uint16_t fgc, uint16_t bgc, uint8_t
     if (alphaDither <  0) alpha = 0;
     if (alphaDither >255) alpha = 255;
   }
-  
+
   return alphaBlend(alpha, fgc, bgc);
 }
 

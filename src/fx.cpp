@@ -26,7 +26,8 @@ uint32_t const PALETTE[16] = {
 };
 
 uint8_t  button_bits;
-uint32_t pixels[SCREEN_W * SCREEN_H];
+uint8_t  pixels[SCREEN_W * SCREEN_H];
+uint32_t pixels32[SCREEN_W * SCREEN_H];
 
 
 int main() {
@@ -72,7 +73,11 @@ int main() {
 
         game::update();
 
-        SDL_UpdateTexture(texture, nullptr, pixels, SCREEN_W * sizeof(uint32_t));
+        for (int i = 0; i < SCREEN_W * SCREEN_H; ++i) {
+            pixels32[i] = PALETTE[pixels[i]];
+        }
+
+        SDL_UpdateTexture(texture, nullptr, pixels32, SCREEN_W * sizeof(uint32_t));
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture, nullptr, nullptr);
         SDL_RenderPresent(renderer);
@@ -89,13 +94,14 @@ bool button_down(int b) {
     return (button_bits >> b) & 1;
 }
 void clear(uint8_t color) {
-    for (uint32_t& p : pixels) p = PALETTE[color];
+    for (uint8_t& p : pixels) p = color;
 }
 void pixel(int x, int y, uint8_t color) {
     if (x < 0 || x >= SCREEN_W) return;
     if (y < 0 || y >= SCREEN_H) return;
-    pixels[y * SCREEN_W + x] = PALETTE[color];
+    pixels[y * SCREEN_W + x] = color;
 }
+uint8_t* pixel_data() { return pixels; }
 
 } // namespace fx
 

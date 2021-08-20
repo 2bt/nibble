@@ -19,8 +19,8 @@ enum {
 
 
 namespace nibble {
-	void init();
-	void update();
-	bool button_down(int b);
-    void flush(uint16_t* pixels);
+    void init();
+    void update();
+    bool button_down(int b);
+    void flush(uint8_t* pixels);
 };
