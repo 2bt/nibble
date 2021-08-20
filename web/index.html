@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nibble Games</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+    }
+    #canvas {
+      image-rendering: optimizespeed;
+      image-rendering: pixelated;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    (async () => {
+
+      const utf8Decoder = new TextDecoder("utf8");
+      const env = {
+        memory: new WebAssembly.Memory({ initial: 32 }),
+        print: (ptr) => {
+          let raw = new Uint8Array(env.memory.buffer, ptr);
+          const nul = raw.indexOf(0);
+          if (nul !== -1) raw = raw.subarray(0, nul);
+          console.log(utf8Decoder.decode(raw));
+        }
+      };
+
+      const response = await fetch("blob.wasm");
+      const buffer = await response.arrayBuffer();
+      const { instance } = await WebAssembly.instantiate(buffer, { env });
+
+      // init game
+      instance.exports.init();
+
+      const contains = (b, x, y) => {
+        return b.x < x && b.x + b.w > x && b.y < y && b.y + b.h > y;
+      };
+      const INPUT_KEYS = {
+        ArrowUp:    1,
+        ArrowDown:  2,
+        ArrowLeft:  4,
+        ArrowRight: 8,
+        KeyC:      16,
+        KeyZ:      16,
+        KeyX:      32,
+        Enter:     64,
+      };
+      let input = {
+        bits: 0,
+        buttons: [],
+        keyDown: (e) => { input.bits |= INPUT_KEYS[e.code]; },
+        keyUp: (e) => { input.bits &= ~INPUT_KEYS[e.code]; },
+        touch: (e) => {
+          e.preventDefault();
+          input.bits = 0;
+          for (const b of display.buttons) {
+            for (const t of e.targetTouches) {
+              if (contains(b, t.clientX, t.clientY)) {
+                input.bits |= b.b;
+                break;
+              }
+            }
+          }
+        },
+        init: () => {
+          window.addEventListener("keydown", input.keyDown);
+          window.addEventListener("keyup", input.keyUp);
+          display.screen.canvas.addEventListener("touchstart", input.touch, { passive: false });
+          display.screen.canvas.addEventListener("touchend", input.touch, { passive: false });
+          display.screen.canvas.addEventListener("touchmove", input.touch, { passive: false });
+        },
+      };
+
+      let display = {
+        w: 128,
+        h: 128,
+        ctx: document.createElement("canvas").getContext('2d', { alpha: false }),
+        screen: document.getElementById("canvas").getContext('2d', { alpha: false }),
+        init: () => {
+          display.ctx.canvas.width  = display.w * 2;
+          display.ctx.canvas.height = display.h * 2;
+          display.r = display.w / display.h;
+          display.resize();
+          window.addEventListener("resize", display.resize);
+        },
+        resize: () => {
+          display.iw = window.innerWidth;
+          display.ih = window.innerHeight;
+          display.ir = display.iw / display.ih;
+
+          display.screen.canvas.width = display.iw;
+          display.screen.canvas.height = display.ih;
+          // make it pixelated
+          display.ctx.imageSmoothingEnabled = false;
+
+          if (display.ir < display.r) {
+            display.size_x = display.iw;
+            display.size_y = display.iw / display.r;
+            display.offset_x = 0;
+            display.offset_y = (display.ih - display.size_y) / 2;
+            display.offset_y = Math.min(display.offset_y, 10);
+
+            const s = display.iw / 6;
+            const y = display.offset_y + display.size_y + 10;
+            display.buttons = [
+              { x: 0 * s + 10, y: y, w: s, h: s, b: INPUT_KEYS.ArrowLeft },
+              { x: 1 * s + 20, y: y, w: s, h: s, b: INPUT_KEYS.ArrowRight },
+              { x: 5 * s - 10, y: y, w: s, h: s, b: INPUT_KEYS.KeyX },
+            ];
+          }
+          else {
+            display.size_x = display.ih * display.r;
+            display.size_y = display.ih;
+            display.offset_x = (display.iw - display.size_x) / 2;
+            display.offset_y = 0;
+            display.buttons = [];
+          }
+        },
+      };
+
+      let game = {
+        loop: () => {
+          window.requestAnimationFrame(game.loop);
+          instance.exports.update(input.bits);
+          const array = new Uint8ClampedArray(env.memory.buffer, instance.exports.pixels(), display.w * display.h * 4);
+          const img = new ImageData(array, display.w, display.h);
+          display.ctx.putImageData(img, 0, 0);
+
+          display.ctx.drawImage(display.ctx.canvas,
+            0, 0, display.w, display.h,
+            0, 0, display.w * 2, display.h * 2);
+
+          const s = display.screen;
+
+          s.fillStyle = "#000";
+          s.fillRect(0, 0, display.iw, display.ih);
+
+          s.drawImage(display.ctx.canvas,
+            display.offset_x,
+            display.offset_y,
+            display.size_x,
+            display.size_y);
+
+          for (const b of display.buttons) {
+            s.fillStyle = (b.b & input.bits) ? '#a75' : "#555";
+            s.beginPath();
+            const x1 = b.x;
+            const x2 = b.x + b.w * 0.5;
+            const x3 = b.x + b.w;
+            const y1 = b.y;
+            const y2 = b.y + b.h * 0.5;
+            const y3 = b.y + b.h;
+
+            s.moveTo(x2, y1);
+            s.arcTo(x3, y1, x3, y2, 10);
+            s.arcTo(x3, y3, x2, y3, 10);
+            s.arcTo(x1, y3, x1, y2, 10);
+            s.arcTo(x1, y1, x2, y1, 10);
+            s.fill();
+          }
+
+        },
+      };
+
+      display.init();
+      input.init();
+      game.loop();
+
+    })();
+  </script>
+</body>
+</html>
