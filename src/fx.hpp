@@ -1,8 +1,32 @@
 #pragma once
 
+#ifdef WASM
+
+#include <stdint.h>
+
+namespace std {
+    template <class T> T min(T const& x, T const& y) { return x < y ? x : y; }
+    template <class T> T max(T const& x, T const& y) { return x > y ? x : y; }
+}
+template <class T> T abs(T const& x) { return x < 0 ? -x : x; }
+inline void memset(void* s, int c, int n) {
+    for (uint8_t* b = (uint8_t*) s; n--;) *b++ = c;
+}
+
+#else
+
 #include <cstdint>
 #include <cstring>
 #include <algorithm>
+
+#endif
+
+#ifndef PROGMEM
+
+#define PROGMEM
+#define pgm_read_byte(x) *(uint8_t const*)(x)
+
+#endif
 
 
 namespace fx {

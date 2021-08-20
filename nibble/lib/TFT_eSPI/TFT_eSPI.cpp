@@ -899,7 +899,7 @@ void TFT_eSPI::push(uint8_t const* data, uint16_t const* palette) {
     SPI1W4 = palette[data[ 8]] | (palette[data[ 9]] << 16);
     SPI1W5 = palette[data[10]] | (palette[data[11]] << 16);
     SPI1W6 = palette[data[12]] | (palette[data[13]] << 16);
-    SPI1W7 = palette[data[13]] | (palette[data[15]] << 16);
+    SPI1W7 = palette[data[14]] | (palette[data[15]] << 16);
     data += 16;
     SPI1CMD |= SPIBUSY;
     while(SPI1CMD & SPIBUSY) {}

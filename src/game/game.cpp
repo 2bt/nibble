@@ -2,6 +2,12 @@
 #include "game.hpp"
 
 
+uint8_t const FONT_DATA[] PROGMEM = {
+    #include "font_data.inc"
+};
+
+
+
 struct Rect {
     int x, y, w, h;
     int left() const { return x; }
@@ -29,6 +35,33 @@ struct Rect {
         return abs(s) < abs(t) ? s : t;
     }
 };
+
+
+void draw_sprite(Rect const& rect, int x, int y) {
+
+    uint8_t const* s = FONT_DATA + rect.y * 128 + rect.x;
+    uint8_t*       p = fx::pixels + y * fx::SCREEN_W + x;
+
+    for (int j = 0; j < rect.h; ++j) {
+
+        uint8_t const* t = s;
+        uint8_t*       q = p;
+
+        for (int i = 0; i < rect.w; ++i) {
+            *q++ = pgm_read_byte(t++);
+        }
+
+        s += 128;
+        p += fx::SCREEN_W;
+    }
+}
+
+void print(int x, int y, char const* str) {
+    for (char c; (c = *str++);) {
+        draw_sprite({(c % 16) << 3, (8 + c / 16) << 3, 6, 8}, x, y);
+        x += 6;
+    }
+}
 
 
 void draw_rect(Rect const& rect, uint8_t color) {
