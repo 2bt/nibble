@@ -4,6 +4,10 @@
 
 
 namespace fx {
+
+uint8_t pixels[SCREEN_W * SCREEN_H];
+uint8_t button_bits;
+
 namespace {
 
 uint32_t const PALETTE[16] = {
@@ -25,7 +29,6 @@ uint32_t const PALETTE[16] = {
     0xFFCCAA,
 };
 
-uint8_t  button_bits;
 uint32_t pixels32[SCREEN_W * SCREEN_H];
 
 
@@ -72,9 +75,7 @@ int main() {
 
         game::update();
 
-        for (int i = 0; i < SCREEN_W * SCREEN_H; ++i) {
-            pixels32[i] = PALETTE[pixels[i]];
-        }
+        for (int i = 0; i < SCREEN_W * SCREEN_H; ++i) pixels32[i] = PALETTE[pixels[i]];
 
         SDL_UpdateTexture(texture, nullptr, pixels32, SCREEN_W * sizeof(uint32_t));
         SDL_RenderClear(renderer);
@@ -88,12 +89,6 @@ int main() {
 }
 
 } // namespace
-
-uint8_t pixels[SCREEN_W * SCREEN_H];
-
-bool button_down(int b) {
-    return (button_bits >> b) & 1;
-}
 
 } // namespace fx
 

@@ -31,16 +31,12 @@ uint32_t const PALETTE[16] = {
     RGB(0xFFCCAA),
 };
 
-uint8_t  button_bits;
 uint32_t pixels32[SCREEN_W * SCREEN_H];
 
 } // namespace
 
 uint8_t pixels[SCREEN_W * SCREEN_H];
-
-bool button_down(int b) {
-    return (button_bits >> b) & 1;
-}
+uint8_t button_bits;
 
 } // namespace fx
 

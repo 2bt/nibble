@@ -45,18 +45,7 @@ namespace fx {
     };
 
     extern uint8_t pixels[SCREEN_W * SCREEN_H];
-
-    bool button_down(int b);
-
-    inline void clear(uint8_t color) {
-        memset(pixels, color, sizeof(pixels));
-    }
-
-    inline void pixel(int x, int y, uint8_t color) {
-        uint32_t q = x | y;
-        if (q & ~127) return;
-        pixels[y * SCREEN_W + x] = color;
-    }
+    extern uint8_t button_bits;
 };
 
 

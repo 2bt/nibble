@@ -2,12 +2,6 @@
 #include "game.hpp"
 
 
-uint8_t const FONT_DATA[] PROGMEM = {
-    #include "font_data.inc"
-};
-
-
-
 struct Rect {
     int x, y, w, h;
     int left() const { return x; }
@@ -37,18 +31,62 @@ struct Rect {
 };
 
 
+uint8_t const FONT_DATA[] PROGMEM = {
+    #include "font_data.inc"
+};
+
+
+namespace render {
+
+
+inline void clear(uint8_t color) {
+    memset(fx::pixels, color, fx::SCREEN_W * fx::SCREEN_H);
+}
+
+inline void pixel(int x, int y, uint8_t color) {
+    uint32_t q = x | y;
+    if (q & ~(fx::SCREEN_W - 1)) return;
+    fx::pixels[y * fx::SCREEN_W + x] = color;
+}
+
+uint8_t alpha = 0;
+
+template <bool TRANSPARENT = true, bool CLIP = true>
 void draw_sprite(Rect const& rect, int x, int y) {
 
-    uint8_t const* s = FONT_DATA + rect.y * 128 + rect.x;
+    int sx = rect.x;
+    int sy = rect.y;
+    int x2 = x + rect.w;
+    int y2 = y + rect.h;
+
+    if (CLIP) {
+        if (x < 0) {
+            sx -= x;
+            x = 0;
+        }
+        if (y < 0) {
+            sy -= y;
+            y = 0;
+        }
+        if (x2 > fx::SCREEN_W) x2 = fx::SCREEN_W;
+        if (y2 > fx::SCREEN_H) y2 = fx::SCREEN_H;
+    }
+
+    uint8_t const* s = FONT_DATA + sy * 128 + sx;
     uint8_t*       p = fx::pixels + y * fx::SCREEN_W + x;
 
-    for (int j = 0; j < rect.h; ++j) {
+    for (int j = y; j < y2; ++j) {
 
         uint8_t const* t = s;
         uint8_t*       q = p;
 
-        for (int i = 0; i < rect.w; ++i) {
-            *q++ = pgm_read_byte(t++);
+        for (int i = x; i < x2; ++i) {
+            uint8_t c = pgm_read_byte(t++);
+            if (TRANSPARENT) {
+                if (c != alpha) *q = c;
+            }
+            else *q = c;
+            ++q;
         }
 
         s += 128;
@@ -64,7 +102,7 @@ void print(int x, int y, char const* str) {
 }
 
 
-void draw_rect(Rect const& rect, uint8_t color) {
+void fill_rect(Rect const& rect, uint8_t color) {
     int x1 = std::max(rect.x, 0);
     int x2 = std::min<int>(rect.x + rect.w, fx::SCREEN_W);
     int y1 = std::max(rect.y, 0);
@@ -78,27 +116,34 @@ void draw_rect(Rect const& rect, uint8_t color) {
 }
 
 
+} // namespace render
+
+
+bool button_down(int b) { return (fx::button_bits >> b) & 1; }
+
+
 int tick = 0;
-int x = 0;
-int y = 0;
+int x = 32;
+int y = 32;
 
 void game::init() {
 }
 
 void game::update() {
 
-    x += fx::button_down(fx::BTN_RIGHT) - fx::button_down(fx::BTN_LEFT);
-    y += fx::button_down(fx::BTN_DOWN)  - fx::button_down(fx::BTN_UP);
+    x += button_down(fx::BTN_RIGHT) - button_down(fx::BTN_LEFT);
+    y += button_down(fx::BTN_DOWN)  - button_down(fx::BTN_UP);
 
-    x += 1;
-    x &= 127;
 
     ++tick;
-    // fx::clear(7);
+    render::clear(0);
     for (int i = 0; i < 16; ++i) {
-        draw_rect({i * 8, 0, 8, 128}, (tick + i) & 0xf);
+        render::fill_rect({i * 8, 0, 8, 128}, (tick + i) & 0xf);
     }
 
-    draw_rect({x, y, 8, 8}, 8);
+    render::print(x, y +  0, "BLONK");
+    render::print(x, y +  8, "INVADERZ");
+    render::print(x, y + 16, "SNAKE");
+    render::print(x, y + 24, "SUPER MARIO");
 }
 

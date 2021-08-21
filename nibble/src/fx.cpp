@@ -5,9 +5,8 @@
 
 namespace fx {
 
+uint8_t button_bits;
 uint8_t pixels[SCREEN_W * SCREEN_H];
-
-bool button_down(int b) { return nibble::button_down(b); }
 
 } // namespace fx
 
@@ -17,7 +16,7 @@ extern "C" void setup() {
 }
 
 extern "C" void loop() {
-    nibble::update();
+    fx::button_bits = nibble::button_bits();
     game::update();
     nibble::flush(fx::pixels);
 }

@@ -63,14 +63,5 @@ void nibble::init() {
     Piezo.begin(BUZZ_PIN);
 }
 
-void nibble::update() {
-    button_bits = ~expander.portRead();
-}
-
-bool nibble::button_down(int b) {
-    return (button_bits >> b) & 1;
-}
-
-void nibble::flush(uint8_t* pixels) {
-    tft.push(pixels, PALETTE);
-}
+uint8_t nibble::button_bits() { return ~expander.portRead(); }
+void    nibble::flush(uint8_t* pixels) { tft.push(pixels, PALETTE); }
