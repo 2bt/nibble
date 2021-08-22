@@ -14,6 +14,8 @@ add_executable(nibble
     src/fx.cpp
 
     src/game/game.cpp
+    src/game/render.cpp
+    src/game/util.cpp
     )
 
 target_include_directories(nibble PRIVATE

@@ -12,6 +12,9 @@ template <class T> T abs(T const& x) { return x < 0 ? -x : x; }
 inline void memset(void* s, int c, int n) {
     for (uint8_t* b = (uint8_t*) s; n--;) *b++ = c;
 }
+inline void strcpy(char* dst, char const* src) {
+    while (*src) *dst++ = *src++;
+}
 
 #else
 
@@ -25,6 +28,7 @@ inline void memset(void* s, int c, int n) {
 
 #define PROGMEM
 #define pgm_read_byte(x) *(uint8_t const*)(x)
+#define strcpy_P strcpy
 
 #endif
 
