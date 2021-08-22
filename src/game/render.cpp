@@ -15,7 +15,7 @@ uint8_t alpha = 0;
 uint8_t palette[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
 
-template <bool TRANSPARENT = true, bool CLIP = true>
+template <bool TRANSPARENT, bool CLIP>
 void draw_sprite(Rect const& rect, int x, int y) {
 
     int sx = rect.x;

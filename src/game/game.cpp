@@ -57,33 +57,29 @@ void game::update() {
     for (int j = 0; j < fx::SCREEN_H; j += 2) {
         for (int i = 0; i < fx::SCREEN_W; i += 2) {
 
-            int x = my_sin(j + tick / 8);
-            int y = my_sin(i + tick / 8);
-            int xp = i + my_sin(x / 8 + tick - my_sin(y / 2 + tick) / 4) / 2;
-            int yp = j + my_sin(y / 8 + tick + my_sin(x / 4 - tick) / 8) / 2;
+            int x = my_sin(j + tick / 16);
+            int y = my_sin(i + tick / 16);
+            int xp = i + my_sin(x / 8 + tick / 2 - my_sin(y / 2 + tick) / 2) / 2;
+            int yp = j + my_sin(y / 8 + tick / 2 + my_sin(x / 4 - tick) / 2) / 2;
             int f = xp + yp + tick / 2;
-
-            uint8_t c = (f / 64) & 0xf;
-//            uint8_t d = ((f + 32) / 64) & 0xf;
-            uint8_t d = c;
-
+            uint8_t const pal[] = { 1, 5, 8, 5 };
+            uint8_t c = pal[( f       / 64) & 0x3];
+            uint8_t d = pal[((f + 32) / 64) & 0x3];
             *p++ = c;
             *p++ = d;
             *q++ = d;
             *q++ = c;
-//            *p++ = 0;
-//            *q++ = 0;
-//            *q++ = 0;
         }
         p += fx::SCREEN_W;
         q += fx::SCREEN_W;
     }
 
+    // darken
     static uint8_t const DARK[] = { 0, 0, 1, 1, 2, 1, 5, 6, 2, 4, 9, 3, 1, 1, 2, 5 };
-
     p = fx::pixels + 56 * fx::SCREEN_W;
     for (int i = 0; i < fx::SCREEN_W * 16; ++i) *p++ = DARK[*p];
 
+    // print titles
     for (int i = 0; i < COUNT_OF(TITLES); ++i) {
 
         int y = i * 16 - pos2 * 2;

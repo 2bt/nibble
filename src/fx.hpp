@@ -13,7 +13,7 @@ inline void memset(void* s, int c, int n) {
     for (uint8_t* b = (uint8_t*) s; n--;) *b++ = c;
 }
 inline void strcpy(char* dst, char const* src) {
-    while (*src) *dst++ = *src++;
+    while ((*dst++ = *src++));
 }
 
 #else
