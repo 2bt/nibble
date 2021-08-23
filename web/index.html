@@ -45,7 +45,9 @@
       instance.exports.init();
 
       const contains = (b, x, y) => {
-        return b.x < x && b.x + b.w > x && b.y < y && b.y + b.h > y;
+        const dx = b.x - x;
+        const dy = b.y - y;
+        return dx * dx + dy * dy < b.r * b.r;
       };
       const INPUT_KEYS = {
         ArrowUp:    1,
@@ -109,15 +111,22 @@
             display.size_x = display.iw;
             display.size_y = display.iw / display.r;
             display.offset_x = 0;
-            display.offset_y = (display.ih - display.size_y) / 2;
-            display.offset_y = Math.min(display.offset_y, 10);
+            display.offset_y = 0;
+            //display.offset_y = (display.ih - display.size_y) / 2;
+            //display.offset_y = Math.min(display.offset_y, 0);
 
-            const s = display.iw / 6;
-            const y = display.offset_y + display.size_y + 10;
+            const s = display.iw / 12;
+            const y = display.offset_y + display.size_y + s * 2;
+            const r = s * 0.66;
+
             display.buttons = [
-              { x: 0 * s + 10, y: y, w: s, h: s, b: INPUT_KEYS.ArrowLeft },
-              { x: 1 * s + 20, y: y, w: s, h: s, b: INPUT_KEYS.ArrowRight },
-              { x: 5 * s - 10, y: y, w: s, h: s, b: INPUT_KEYS.KeyX },
+              { x: 2 * s, y: y - s, r: r, b: INPUT_KEYS.ArrowUp },
+              { x: 2 * s, y: y + s, r: r, b: INPUT_KEYS.ArrowDown },
+              { x: 1 * s, y: y, r: r, b: INPUT_KEYS.ArrowLeft },
+              { x: 5.5 * s, y: y, r: s, b: INPUT_KEYS.Enter },
+              { x: 3 * s, y: y, r: r, b: INPUT_KEYS.ArrowRight },
+              { x: 8.7 * s, y: y + s * 0.4, r: s, b: INPUT_KEYS.KeyZ },
+              { x: 10.7 * s, y: y - s * 0.4, r: s, b: INPUT_KEYS.KeyX },
             ];
           }
           else {
@@ -154,20 +163,10 @@
             display.size_y);
 
           for (const b of display.buttons) {
-            s.fillStyle = (b.b & input.bits) ? '#a75' : "#555";
+            s.fillStyle = (b.b & input.bits) ? "#a75" : "#555";
             s.beginPath();
-            const x1 = b.x;
-            const x2 = b.x + b.w * 0.5;
-            const x3 = b.x + b.w;
-            const y1 = b.y;
-            const y2 = b.y + b.h * 0.5;
-            const y3 = b.y + b.h;
 
-            s.moveTo(x2, y1);
-            s.arcTo(x3, y1, x3, y2, 10);
-            s.arcTo(x3, y3, x2, y3, 10);
-            s.arcTo(x1, y3, x1, y2, 10);
-            s.arcTo(x1, y1, x2, y1, 10);
+            s.arc(b.x, b.y, b.r, 0, 2 * Math.PI);
             s.fill();
           }
 
