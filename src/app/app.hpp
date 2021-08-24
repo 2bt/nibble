@@ -10,6 +10,6 @@ enum {
 
 
 namespace app {
-    void init(int game = G_ASTEROIDS);
+    void init(int game = G_MENU);
     void update();
 }

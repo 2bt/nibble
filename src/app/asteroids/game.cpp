@@ -48,19 +48,18 @@ void AsteroidsGame::spawn_asteroid(int x, int y, int size) {
         a.vx   = my_sin(ang) * v >> 8;
         a.vy   = my_cos(ang) * v >> 8;
         a.ang  = random.rand();
-        a.vang = random.rand();
+        a.vang = random.rand() >> (6 + size);
         return;
     }
 }
 
 void AsteroidsGame::init() {
-    tick = 0;
     score = 0;
-    init_level(3);
+    init_level(1);
 }
 void AsteroidsGame::init_level(int l) {
     level = l;
-
+    tick = 0;
     ship.x = ship.y = (63 << 9);
     ship.vx = ship.vy = 0;
     ship.ang = 0;
@@ -81,20 +80,18 @@ void AsteroidsGame::init_level(int l) {
 
 void AsteroidsGame::spawn_explosion(int x, int y, int size) {
     int count = 8 << size;
-
     for (int i = 0; i < count; ++i) {
         Particle& p = particles[next_particle];
         if (++next_particle >= MAX_PARTICLES) next_particle = 0;
 
-        uint8_t ang = random.rand();
+        uint8_t ang = (random.rand() & 63) | ((i & 3) << 6);
         int si = my_sin(ang);
         int co = my_cos(ang);
 
         uint16_t v = (random.rand() >> 10) + 100;
 
         p.ttl   = 3 + (random.rand() & 15);
-        p.color = 8 + (i & 3);
-        if (p.color == 11) p.color = 8;
+        p.color = 8 + (i / 4 & 1);
         p.vx = si * v >> 6;
         p.vy = co * v >> 6;
         p.x = x >> 1;
@@ -106,8 +103,6 @@ void AsteroidsGame::spawn_explosion(int x, int y, int size) {
 
 
 void AsteroidsGame::update() {
-
-    ++tick;
 
     // move ship
     ship.ang += (button_down(fx::BTN_RIGHT) - button_down(fx::BTN_LEFT)) * 4;
@@ -128,10 +123,21 @@ void AsteroidsGame::update() {
     ship.y &= (1 << 16) - 1;
 
 
+    // clear screen
+    {
+        uint8_t* p = fx::pixels;
+        uint8_t* q = fx::pixels + fx::SCREEN_W;
+        for (int y = 0; y < fx::SCREEN_H; y += 2) {
+            for (int x = 0; x < fx::SCREEN_W; ++x) {
+                *p++ = 0;
+                *q++ = 1;
+            }
+            p += fx::SCREEN_W;
+            q += fx::SCREEN_W;
+        }
+    }
 
-    // draw
-    render::clear(1);
-
+    // draw ship
     int8_t const POINTS[] = {
         -10, -10,
         0, -5,
@@ -185,7 +191,7 @@ void AsteroidsGame::update() {
 
             int x0 = ship.x + y * si;
             int y0 = ship.y - y * co;
-            render::pixel((x0 >> 9) & 127, (y0 >> 9) & 127, 8 + i);
+            render::pixel((x0 >> 9) & 127, (y0 >> 9) & 127, 10);
         }
     }
 
@@ -200,8 +206,11 @@ void AsteroidsGame::update() {
     };
 
 
+    bool level_cleared = true;
     for (Asteroid& a : asteroids) {
         if (a.health == 0) continue;
+        level_cleared = false;
+
 
         a.ang += a.vang;
         a.x += a.vx;
@@ -223,8 +232,8 @@ void AsteroidsGame::update() {
         dy >>= 9;
         if (dx > 64) dx = fx::SCREEN_W - dx;
         if (dy > 64) dx = fx::SCREEN_H - dx;
-        int r = s + 2;
-        if (dx * dx + dy * dy < r * r) {
+        int r = (s + 2) * (s + 3);
+        if (dx * dx + dy * dy < r) {
             color = 8;
         }
 
@@ -270,6 +279,11 @@ void AsteroidsGame::update() {
             x0 = x1;
             y0 = y1;
         }
+    }
+    if (level_cleared && ++tick > 100) {
+        init_level(level + 1);
+        render::clear(8);
+        return;
     }
 
 
