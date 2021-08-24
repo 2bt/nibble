@@ -18,6 +18,7 @@ add_executable(nibble
     src/app/util.cpp
 
     src/app/worm/game.cpp
+    src/app/asteroids/game.cpp
     )
 
 target_include_directories(nibble PRIVATE

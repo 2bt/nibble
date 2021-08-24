@@ -2,21 +2,9 @@
 #include "app.hpp"
 #include "render.hpp"
 
+#include "asteroids/game.hpp"
 #include "worm/game.hpp"
 
-
-
-struct AsteroidsGame {
-    void init() {}
-    void update();
-    int x;
-};
-
-extern AsteroidsGame& asteroids;
-
-void AsteroidsGame::update() {
-    render::clear(15);
-}
 
 struct SnakeGame {
     void init() {}
@@ -33,14 +21,8 @@ char const T2[] PROGMEM = "SNAKE";
 char const T3[] PROGMEM = "WORM";
 char const* const TITLES[] PROGMEM = { T1, T2, T3, };
 
-enum {
-    G_MENU = -1,
-    G_ASTEROIDS,
-    G_SNAKE,
-    G_WORM,
-};
 
-int current_game = G_MENU;
+int current_game;
 
 
 struct Menu {
