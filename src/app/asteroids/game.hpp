@@ -13,8 +13,8 @@ struct AsteroidsGame {
 
     enum {
         MAX_BULLETS   = 4,
-        MAX_ASTEROIDS = 32,
-        MAX_PARTICLES = 40,
+        MAX_ASTEROIDS = 64,
+        MAX_PARTICLES = 64,
     };
 
     struct Bullet {

@@ -206,11 +206,10 @@ void AsteroidsGame::update() {
     };
 
 
-    bool level_cleared = true;
+    int level_cleared = true;
     for (Asteroid& a : asteroids) {
         if (a.health == 0) continue;
         level_cleared = false;
-
 
         a.ang += a.vang;
         a.x += a.vx;
@@ -297,7 +296,6 @@ void AsteroidsGame::update() {
         p.y += p.vy;
         plot_line(x >> 8, y >> 8, p.x >> 8, p.y >> 8, p.color);
     }
-
 
 
     {
