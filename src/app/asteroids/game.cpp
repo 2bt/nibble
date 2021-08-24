@@ -22,6 +22,13 @@ void plot_line(int x0, int y0, int x1, int y1, uint8_t c) {
 }
 
 
+enum {
+    FRICTION_BITS = 6,
+    SPEED         = 50,
+    SHAPE_COUNT   = 3,
+};
+
+
 } // namespace
 
 void AsteroidsGame::spawn_asteroid(int x, int y, int size) {
@@ -48,7 +55,7 @@ void AsteroidsGame::spawn_asteroid(int x, int y, int size) {
 
 void AsteroidsGame::init() {
     tick = 0;
-    init_level(1);
+    init_level(3);
 }
 void AsteroidsGame::init_level(int l) {
     level = l;
@@ -59,8 +66,10 @@ void AsteroidsGame::init_level(int l) {
 
     next_bullet = 0;
     next_shape = 0;
+    next_particle = 0;
     for (Asteroid& a : asteroids) a.health = 0;
     for (Bullet& b : bullets) b.ttl = 0;
+    for (Particle& p : particles) p.ttl = 0;
 
     for (int i = 0; i < level; ++i) {
         if (i & 1) {
@@ -73,11 +82,32 @@ void AsteroidsGame::init_level(int l) {
 }
 
 
+void AsteroidsGame::spawn_explosion(int x, int y, int size) {
+    int count = 8 << size;
+
+    for (int i = 0; i < count; ++i) {
+        Particle& p = particles[next_particle];
+        if (++next_particle >= MAX_PARTICLES) next_particle = 0;
+
+        uint8_t ang = random.rand();
+        int si = my_sin(ang);
+        int co = my_cos(ang);
+
+        uint16_t v = (random.rand() >> 10) + 100;
+
+        p.ttl   = 3 + (random.rand() & 15);
+        p.color = 8 + (random.rand() & 1);
+        p.vx = si * v >> 6;
+        p.vy = co * v >> 6;
+        p.x = x >> 1;
+        p.y = y >> 1;
+        p.x += p.vx * size;
+        p.y += p.vy * size;
+    }
+}
+
+
 void AsteroidsGame::update() {
-    enum {
-        FRICTION_BITS = 6,
-        SPEED         = 50,
-    };
 
     ++tick;
 
@@ -137,11 +167,13 @@ void AsteroidsGame::update() {
         --b.ttl;
         int si = my_sin(b.ang);
         int co = my_cos(b.ang);
+        int x = b.x;
+        int y = b.y;
         b.x += si * 8;
         b.y -= co * 8;
+        plot_line(x >> 9, y >> 9, b.x >> 9, b.y >> 9, 11);
         b.x &= (1 << 16) - 1;
         b.y &= (1 << 16) - 1;
-        render::pixel(b.x >> 9, b.y >> 9, 7);
     }
 
     // flames
@@ -181,7 +213,7 @@ void AsteroidsGame::update() {
 
 
         int8_t const (&POINTS)[LEN] = ASTEROID_POINTS[a.shape];
-        uint8_t const SCALES[] = { 4, 8, 12 };
+        uint8_t const SCALES[SHAPE_COUNT] = { 4, 8, 12 };
         uint8_t s = SCALES[a.size];
 
         uint8_t color = 7;
@@ -210,10 +242,13 @@ void AsteroidsGame::update() {
             int r = s + 1;
             if (dx * dx + dy * dy < r * r) {
                 b.ttl = 0;
-                if (a.health == 1 && a.size > 0) {
-                    spawn_asteroid(a.x, a.y, a.size - 1);
-                    spawn_asteroid(a.x, a.y, a.size - 1);
-                    spawn_asteroid(a.x, a.y, a.size - 1);
+                if (a.health == 1) {
+                    spawn_explosion(a.x, a.y, a.size);
+                    if (a.size > 0) {
+                        spawn_asteroid(a.x, a.y, a.size - 1);
+                        spawn_asteroid(a.x, a.y, a.size - 1);
+                        spawn_asteroid(a.x, a.y, a.size - 1);
+                    }
                 }
                 --a.health;
             }
@@ -236,4 +271,17 @@ void AsteroidsGame::update() {
             y0 = y1;
         }
     }
+
+
+    // particles
+    for (Particle& p : particles) {
+        if (p.ttl == 0) continue;
+        --p.ttl;
+        int x = p.x;
+        int y = p.y;
+        p.x += p.vx;
+        p.y += p.vy;
+        plot_line(x >> 8, y >> 8, p.x >> 8, p.y >> 8, p.color);
+    }
+
 }
