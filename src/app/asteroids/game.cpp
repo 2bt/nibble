@@ -55,6 +55,7 @@ void AsteroidsGame::spawn_asteroid(int x, int y, int size) {
 
 void AsteroidsGame::init() {
     tick = 0;
+    score = 0;
     init_level(3);
 }
 void AsteroidsGame::init_level(int l) {
@@ -72,12 +73,8 @@ void AsteroidsGame::init_level(int l) {
     for (Particle& p : particles) p.ttl = 0;
 
     for (int i = 0; i < level; ++i) {
-        if (i & 1) {
-            spawn_asteroid(0, random.rand(), 2);
-        }
-        else {
-            spawn_asteroid(random.rand(), 0, 2);
-        }
+        if (i & 1) spawn_asteroid(0, random.rand(), 2);
+        else       spawn_asteroid(random.rand(), 0, 2);
     }
 }
 
@@ -96,7 +93,8 @@ void AsteroidsGame::spawn_explosion(int x, int y, int size) {
         uint16_t v = (random.rand() >> 10) + 100;
 
         p.ttl   = 3 + (random.rand() & 15);
-        p.color = 8 + (random.rand() & 1);
+        p.color = 8 + (i & 3);
+        if (p.color == 11) p.color = 8;
         p.vx = si * v >> 6;
         p.vy = co * v >> 6;
         p.x = x >> 1;
@@ -132,7 +130,7 @@ void AsteroidsGame::update() {
 
 
     // draw
-    render::clear(0);
+    render::clear(1);
 
     int8_t const POINTS[] = {
         -10, -10,
@@ -243,6 +241,9 @@ void AsteroidsGame::update() {
             if (dx * dx + dy * dy < r * r) {
                 b.ttl = 0;
                 if (a.health == 1) {
+                    if (a.size == 0) score += 100;
+                    if (a.size == 1) score += 50;
+                    if (a.size == 2) score += 20;
                     spawn_explosion(a.x, a.y, a.size);
                     if (a.size > 0) {
                         spawn_asteroid(a.x, a.y, a.size - 1);
@@ -253,7 +254,6 @@ void AsteroidsGame::update() {
                 --a.health;
             }
         }
-
 
 
         int si = my_sin(a.ang >> 8) * s;
@@ -284,4 +284,27 @@ void AsteroidsGame::update() {
         plot_line(x >> 8, y >> 8, p.x >> 8, p.y >> 8, p.color);
     }
 
+
+
+    {
+        int s = score;
+        int D[] = {
+            1000000,
+            100000,
+            10000,
+            1000,
+            100,
+            10,
+            1,
+        };
+        for (int i = 0; i < 7; ++i) {
+            char c = '0';
+            while (s >= D[i]) {
+                s -= D[i];
+                ++c;
+            }
+            if (s < score || i == 6)
+            render::draw_glyph(i * 6 + 86, 1, c);
+        }
+    }
 }

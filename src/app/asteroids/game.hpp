@@ -63,4 +63,5 @@ struct AsteroidsGame {
     uint8_t   next_bullet;
     uint8_t   next_shape;
     uint8_t   next_particle;
+    int       score;
 };

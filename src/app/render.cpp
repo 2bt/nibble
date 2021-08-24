@@ -60,14 +60,6 @@ void draw_sprite(Rect const& rect, int x, int y) {
 
 template void draw_sprite(Rect const& rect, int x, int y);
 
-void print(int x, int y, char const* str) {
-    for (char c; (c = *str++);) {
-        draw_sprite({(c % 16) << 3, (8 + c / 16) << 3, 6, 8}, x, y);
-        x += 6;
-    }
-}
-
-
 void fill_rect(Rect const& rect, uint8_t color) {
     int x1 = std::max(rect.x, 0);
     int x2 = std::min<int>(rect.x + rect.w, fx::SCREEN_W);
