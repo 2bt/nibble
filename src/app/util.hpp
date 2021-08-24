@@ -36,6 +36,13 @@ struct Rect {
 
 
 extern int8_t const SIN_TABLE[256] PROGMEM;
-
-
 inline int8_t my_sin(uint8_t x) { return pgm_read_byte(SIN_TABLE + x); }
+
+
+extern uint8_t prev_button_bits;
+inline bool button_down(int b) {
+    return (fx::button_bits >> b) & 1;
+}
+inline bool button_just_pressed(int b) {
+    return button_down(b) & ~(prev_button_bits >> b) & 1;
+}
