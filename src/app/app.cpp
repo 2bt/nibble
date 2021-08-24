@@ -76,7 +76,7 @@ void Menu::update() {
     // darken
     static uint8_t const DARK[] = { 0, 0, 1, 1, 2, 1, 5, 6, 2, 4, 9, 3, 1, 1, 2, 5 };
     p = fx::pixels + 56 * fx::SCREEN_W;
-    for (int i = 0; i < fx::SCREEN_W * 16; ++i) *p++ = DARK[*p];
+    for (int i = 0; i < fx::SCREEN_W * 16; ++i, ++p) *p = DARK[*p];
 
     // print titles
     for (int i = 0; i < COUNT_OF(TITLES); ++i) {

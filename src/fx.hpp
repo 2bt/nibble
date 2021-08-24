@@ -39,8 +39,8 @@ namespace fx {
         BTN_DOWN,
         BTN_LEFT,
         BTN_RIGHT,
-        BTN_A,
         BTN_B,
+        BTN_A,
         BTN_C,
         BTN_COUNT,
 

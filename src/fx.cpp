@@ -68,9 +68,9 @@ int main() {
         button_bits |= !!ks[SDL_SCANCODE_RIGHT ] << BTN_RIGHT;
         button_bits |= !!ks[SDL_SCANCODE_UP    ] << BTN_UP;
         button_bits |= !!ks[SDL_SCANCODE_DOWN  ] << BTN_DOWN;
-        button_bits |= !!ks[SDL_SCANCODE_Z     ] << BTN_A;
-        button_bits |= !!ks[SDL_SCANCODE_C     ] << BTN_A;
-        button_bits |= !!ks[SDL_SCANCODE_X     ] << BTN_B;
+        button_bits |= !!ks[SDL_SCANCODE_X     ] << BTN_A;
+        button_bits |= !!ks[SDL_SCANCODE_Z     ] << BTN_B;
+        button_bits |= !!ks[SDL_SCANCODE_C     ] << BTN_B;
         button_bits |= !!ks[SDL_SCANCODE_RETURN] << BTN_C;
 
         app::update();
