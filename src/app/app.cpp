@@ -26,29 +26,36 @@ struct SnakeGame {
 };
 
 
-
+namespace {
 
 char const T1[] PROGMEM = "ASTEROIDS";
 char const T2[] PROGMEM = "SNAKE";
 char const T3[] PROGMEM = "WORM";
 char const* const TITLES[] PROGMEM = { T1, T2, T3, };
 
+enum {
+    G_MENU = -1,
+    G_ASTEROIDS,
+    G_SNAKE,
+    G_WORM,
+};
+
+int current_game = G_MENU;
+
 
 struct Menu {
     uint32_t tick;
     int      pos;
     int      smooth_pos;
-
     void init();
     void update();
 };
-
 void Menu::init() {
-    tick       = 666;
-    pos        = 0;
-    smooth_pos = 0;
+    pos = 0;
+    if (current_game != G_MENU) pos = current_game;
+    smooth_pos = pos << 3;
+    tick = 666;
 }
-
 void Menu::update() {
     ++tick;
 
@@ -104,7 +111,7 @@ void Menu::update() {
 
 
     // start game
-    if (fx::button_bits & ((1 << fx::BTN_A) | (1 << fx::BTN_B) | (1 << fx::BTN_C))) {
+    if (fx::button_bits & ((1 << fx::BTN_A) | (1 << fx::BTN_B))) {
         app::init(pos);
     }
 }
@@ -119,27 +126,21 @@ union GameUnion {
 } game_union;
 
 
-enum {
-    G_MENU = -1,
-    G_ASTEROIDS,
-    G_SNAKE,
-    G_WORM,
-};
 
 
-int     current_game = G_MENU;
-uint8_t prev_button_bits;
+
+} // namespace
 
 
 void app::init(int game) {
-    current_game = game;
-    switch (current_game) {
+    switch (game) {
     case G_MENU:      game_union.menu.init();      break;
     case G_ASTEROIDS: game_union.asteroids.init(); break;
     case G_SNAKE:     game_union.snake.init();     break;
     case G_WORM:      game_union.worm.init();      break;
     default: break;
     }
+    current_game = game;
 }
 
 
@@ -151,6 +152,8 @@ void app::update() {
     case G_WORM:      game_union.worm.update();      break;
     default: break;
     }
+
+    if (current_game != G_MENU && button_just_pressed(fx::BTN_C)) app::init(G_MENU);
     prev_button_bits = fx::button_bits;
 }
 

@@ -1,6 +1,6 @@
 #include <SDL.h>
 #include "fx.hpp"
-#include "game/game.hpp"
+#include "app/app.hpp"
 
 
 namespace fx {
@@ -45,7 +45,7 @@ int main() {
                                              SDL_TEXTUREACCESS_STREAMING,
                                              SCREEN_W, SCREEN_H);
 
-    game::init();
+    app::init();
 
     bool running = true;
     while (running) {
@@ -73,7 +73,7 @@ int main() {
         button_bits |= !!ks[SDL_SCANCODE_X     ] << BTN_B;
         button_bits |= !!ks[SDL_SCANCODE_RETURN] << BTN_C;
 
-        game::update();
+        app::update();
 
         for (int i = 0; i < SCREEN_W * SCREEN_H; ++i) pixels32[i] = PALETTE[pixels[i]];
 

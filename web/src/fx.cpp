@@ -1,5 +1,5 @@
 #include "fx.hpp"
-#include "game/game.hpp"
+#include "app/app.hpp"
 
 
 namespace fx {
@@ -43,11 +43,11 @@ uint8_t button_bits;
 #define EXPORT __attribute__((visibility("default"))) extern "C"
 
 EXPORT void init() {
-    game::init();
+    app::init();
 }
 EXPORT void update(uint32_t bits) {
     fx::button_bits = bits;
-    game::update();
+    app::update();
     for (int i = 0; i < fx::SCREEN_W * fx::SCREEN_H; ++i) {
         fx::pixels32[i] = fx::PALETTE[fx::pixels[i]];
     }

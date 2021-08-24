@@ -1,13 +1,17 @@
 #pragma once
 
+#include "../util.hpp"
+
 
 struct WormGame {
+    void init();
+    void update();
+
+
     int tick;
 
-    void init() {
-        tick = 0;
-    }
-    void update() {
-        render::clear(tick++ & 0xf);
-    }
+
+    int     x;
+    int     y;
+    uint8_t ang;
 };

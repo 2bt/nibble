@@ -1,6 +1,6 @@
 #include <nibble.hpp>
 #include "fx.hpp"
-#include "game/game.hpp"
+#include "app/app.hpp"
 
 
 namespace fx {
@@ -12,11 +12,11 @@ uint8_t pixels[SCREEN_W * SCREEN_H];
 
 extern "C" void setup() {
     nibble::init();
-    game::init();
+    app::init();
 }
 
 extern "C" void loop() {
     fx::button_bits = nibble::button_bits();
-    game::update();
+    app::update();
     nibble::flush(fx::pixels);
 }

@@ -19,7 +19,7 @@ LF += --allow-undefined-file=src/wasm.sym
 
 CF += -I src
 
-SRC = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp)
+SRC = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp) $(wildcard src/*/*/*.cpp)
 OBJ = $(SRC:src/%.cpp=obj/%.o)
 TRG = blob.wasm
 
