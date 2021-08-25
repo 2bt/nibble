@@ -11,6 +11,7 @@ struct AsteroidsGame {
     void spawn_explosion(int x, int y, int size);
     void init_level(int l);
 
+
     enum {
         MAX_BULLETS   = 4,
         MAX_ASTEROIDS = 64,
@@ -46,6 +47,7 @@ struct AsteroidsGame {
     };
 
     enum {
+        S_HIGH_SCORES,
         S_LEVEL_START,
         S_NORMAL,
         S_GAME_OVER,
@@ -64,11 +66,16 @@ struct AsteroidsGame {
         uint8_t ang;
     } ship;
 
-    Bullet    bullets[MAX_BULLETS];
-    Asteroid  asteroids[MAX_ASTEROIDS];
-    Particle  particles[MAX_PARTICLES];
-    uint8_t   next_bullet;
-    uint8_t   next_shape;
-    uint8_t   next_particle;
-    int       score;
+    Bullet     bullets[MAX_BULLETS];
+    Asteroid   asteroids[MAX_ASTEROIDS];
+    Particle   particles[MAX_PARTICLES];
+    uint8_t    next_bullet;
+    uint8_t    next_shape;
+    uint8_t    next_particle;
+    int        score;
+
+    HighScores high_scores;
+    uint8_t    new_high_score;
+    uint8_t    current_letter;
+    char       name[4];
 };

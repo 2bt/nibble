@@ -8,6 +8,9 @@ namespace fx {
 uint8_t pixels[SCREEN_W * SCREEN_H];
 uint8_t button_bits;
 
+bool try_load(char const* filename, void* data, int len) { return false; }
+void store(char const* filename, void const* data, int len) {}
+
 namespace {
 
 uint32_t const PALETTE[16] = {

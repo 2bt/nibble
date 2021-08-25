@@ -7,10 +7,18 @@
 
 
 struct SnakeGame {
-    void init() {}
-    void update() {
-        render::clear(14);
+    void init() {
+        render::clear(0);
     }
+    void update() {
+        uint8_t* p = fx::pixels;
+        for (int i = 0; i < 256; ++i) {
+            uint16_t x = random.rand() & 0x3fff;
+            p[x] += random.rand() & 3;
+            p[x] &= 0xf;
+        }
+    }
+    Random random;
 };
 
 
@@ -108,13 +116,12 @@ union GameUnion {
 } game_union;
 
 
-
-
-
 } // namespace
 
 
+
 void app::init(int game) {
+
     switch (game) {
     case G_MENU:      game_union.menu.init();      break;
     case G_ASTEROIDS: game_union.asteroids.init(); break;
@@ -134,7 +141,6 @@ void app::update() {
     case G_WORM:      game_union.worm.update();      break;
     default: break;
     }
-
     if (current_game != G_MENU && button_just_pressed(fx::BTN_C)) app::init(G_MENU);
     prev_button_bits = fx::button_bits;
 }

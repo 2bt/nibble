@@ -2,31 +2,10 @@
 #include "../render.hpp"
 
 
+#define HIGH_SCORES_FILE "/asteroids"
+
+
 namespace {
-
-
-void itos(int n, char* s) {
-    int const D[] = {
-        1000000,
-        100000,
-        10000,
-        1000,
-        100,
-        10,
-        1,
-    };
-    int m = n;
-
-    for (int i = 0; i < 7; ++i) {
-        char c = '0';
-        while (m >= D[i]) {
-            m -= D[i];
-            ++c;
-        }
-        if (m < n || i == 6) *s++ = c;
-    }
-    *s = '\0';
-}
 
 
 void plot_line(int x0, int y0, int x1, int y1, uint8_t c) {
@@ -57,8 +36,27 @@ enum {
 
 
 void AsteroidsGame::init() {
+
+    if (!high_scores.load(HIGH_SCORES_FILE)) {
+        high_scores.reset();
+        for (int i = HighScores::LEN; i > 0; --i) high_scores.add("...", i * 100);
+        high_scores.save(HIGH_SCORES_FILE);
+    }
+    name[0] = 'A';
+    name[1] = 'A';
+    name[2] = 'A';
+
     score = 0;
-    init_level(1);
+    init_level(0);
+
+    state = S_HIGH_SCORES;
+
+    spawn_asteroid(random.rand(), random.rand(), 2);
+    spawn_asteroid(random.rand(), random.rand(), 1);
+    spawn_asteroid(random.rand(), random.rand(), 1);
+    spawn_asteroid(random.rand(), random.rand(), 0);
+    spawn_asteroid(random.rand(), random.rand(), 0);
+    spawn_asteroid(random.rand(), random.rand(), 0);
 }
 
 void AsteroidsGame::init_level(int l) {
@@ -68,6 +66,7 @@ void AsteroidsGame::init_level(int l) {
     ship.x = ship.y = (63 << 9);
     ship.vx = ship.vy = 0;
     ship.ang = 0;
+
     next_bullet = 0;
     next_shape = 0;
     next_particle = 0;
@@ -78,6 +77,9 @@ void AsteroidsGame::init_level(int l) {
         if (i & 1) spawn_asteroid(0, random.rand(), 2);
         else       spawn_asteroid(random.rand(), 0, 2);
     }
+
+    current_letter = 0;
+    new_high_score = false;
 }
 
 void AsteroidsGame::spawn_asteroid(int x, int y, int size) {
@@ -167,7 +169,7 @@ void AsteroidsGame::update() {
     }
 
 
-    if (state != S_GAME_OVER) {
+    if (state == S_LEVEL_START || state == S_NORMAL) {
         // draw ship
         int8_t const POINTS[] = {
             -10, -10,
@@ -226,10 +228,8 @@ void AsteroidsGame::update() {
     }
 
 
-    enum {
-        LEN = 24
-    };
-    int8_t const ASTEROID_POINTS[3][LEN] = {
+    enum { LEN = 24 };
+    int8_t const ASTEROID_POINTS[SHAPE_COUNT][LEN] = {
         { -3, 4, 1, 4, 4, 2, 4, 1, 1, 0, 4, -2, 2, -4, 1, -3, -2, -4, -4, -1, -4, 2, -1, 2, },
         { -2, 4,-2, 4, -2, 4, 0, 2, 2, 4, 4, 2, 3, 0, 4, -2, 1, -4, -2, -4, -4, -2, -4, 2, },
         { -2, 4, 0, 3, 2, 4, 4, 2, 2, 1, 4, -1, 2, -4, -1, -3, -2, -4, -4, -2, -3, 0, -4, 2 },
@@ -253,19 +253,25 @@ void AsteroidsGame::update() {
         uint8_t s = SCALES[a.size];
 
         // ship collision
-        if (state != S_GAME_OVER) {
+        if (state == S_NORMAL) {
             int dx = abs(ship.x - a.x);
             int dy = abs(ship.y - a.y);
             dx >>= 9;
             dy >>= 9;
             if (dx > 64) dx = fx::SCREEN_W - dx;
-            if (dy > 64) dx = fx::SCREEN_H - dx;
+            if (dy > 64) dy = fx::SCREEN_H - dy;
             int r = (s + 2) * (s + 3);
             if (dx * dx + dy * dy < r) {
-                state = S_GAME_OVER;
                 spawn_explosion(ship.x, ship.y, 2);
                 spawn_explosion(ship.x, ship.y, 1);
                 spawn_explosion(ship.x, ship.y, 0);
+
+                state = S_GAME_OVER;
+
+                // check for high score
+                if (score > high_scores.entries[9].score) {
+                    new_high_score = true;
+                }
             }
         }
 
@@ -278,14 +284,13 @@ void AsteroidsGame::update() {
             dx >>= 9;
             dy >>= 9;
             if (dx > 64) dx = fx::SCREEN_W - dx;
-            if (dy > 64) dx = fx::SCREEN_H - dx;
+            if (dy > 64) dy = fx::SCREEN_H - dy;
             int r = s + 1;
             if (dx * dx + dy * dy < r * r) {
                 b.ttl = 0;
                 if (a.health == 1) {
-                    if (a.size == 0) score += 100;
-                    if (a.size == 1) score += 50;
-                    if (a.size == 2) score += 20;
+                    uint8_t const SCORES[] = { 10, 5, 2 };
+                    score += SCORES[a.size];
                     spawn_explosion(a.x, a.y, a.size);
                     if (a.size > 0) {
                         spawn_asteroid(a.x, a.y, a.size - 1);
@@ -314,6 +319,7 @@ void AsteroidsGame::update() {
         }
     }
 
+
     // particles
     for (Particle& p : particles) {
         if (p.ttl == 0) continue;
@@ -326,46 +332,86 @@ void AsteroidsGame::update() {
     }
 
 
-    {
-        int s = score;
-        int D[] = {
-            1000000,
-            100000,
-            10000,
-            1000,
-            100,
-            10,
-            1,
-        };
-        for (int i = 0; i < 7; ++i) {
-            char c = '0';
-            while (s >= D[i]) {
-                s -= D[i];
-                ++c;
-            }
-            if (s < score || i == 6)
-            render::draw_glyph(i * 6 + 86, 1, c);
-        }
+    if (state != S_HIGH_SCORES) {
+        // score
+        char str[8];
+        itos(str, score);
+        render::print(128 - strlen(str) * 6, 1, str);
     }
 
 
     if (state == S_LEVEL_START) {
+        char str[12] = "LEVEL ";
+        itos(str + 6, level);
+        if (tick < 40 || (tick & 2)) render::print(43, 32, str);
         if (++tick > 80) {
             state = S_NORMAL;
             tick = 0;
         }
-        char str[12] = "LEVEL ";
-        itos(level, str + 6);
-        if (tick < 40 || (tick & 2)) render::print(43, 32, str);
     }
     else if (state == S_GAME_OVER) {
-        if (++tick > 40) {
-            render::print(37, 32, "GAME OVER");
-            // restart game
-            if (button_down(fx::BTN_A) | button_down(fx::BTN_B)) init();
+        if (++tick > 63) {
+            if ((tick & 63) < 48) render::print(37, 32, "GAME OVER");
+            if (new_high_score) {
+                render::palette[7] = 10;
+                render::print(22, 60, "NEW HIGH SCORE");
+                render::palette[7] = 7;
+
+
+                if (button_just_pressed(fx::BTN_LEFT) && current_letter > 0) --current_letter;
+                if (button_just_pressed(fx::BTN_RIGHT) && current_letter < 2) ++current_letter;
+                if (button_just_pressed(fx::BTN_UP)) {
+                    ++name[current_letter];
+                    if      (name[current_letter] == 'Z' + 1) name[current_letter] = '0';
+                    else if (name[current_letter] == '9' + 1) name[current_letter] = 'A';
+                }
+                if (button_just_pressed(fx::BTN_DOWN)) {
+                    --name[current_letter];
+                    if      (name[current_letter] == 'A' - 1) name[current_letter] = '9';
+                    else if (name[current_letter] == '0' - 1) name[current_letter] = 'Z';
+                }
+
+                for (int i = 0; i < 3; ++i) {
+                    if (i != current_letter || (tick & 4)) {
+                        render::draw_glyph(55 + i * 6, 88, name[i]);
+                    }
+                }
+
+            }
+        }
+        if (++tick > 127 && (button_just_pressed(fx::BTN_A) | button_just_pressed(fx::BTN_B))) {
+            if (new_high_score) {
+                high_scores.add(name, score);
+                high_scores.save(HIGH_SCORES_FILE);
+            }
+            state = S_HIGH_SCORES;
+            score = 0;
         }
     }
+    else if (state == S_HIGH_SCORES) {
+        render::palette[7] = 10;
+        render::print(37, 16, "ASTEROIDS");
+        render::palette[7] = 7;
+        for (int i = 0; i < HighScores::LEN; ++i) {
+            int y = i * 8 + 1 + 32;
+            char str[8];
+            itos(str, i + 1);
+            int l = i < 9 ? 1 : 2;
+            str[l] = '.';
+            str[l + 1] = 0;
+            render::print(25 - l * 6, y, str);
+            itos(str, high_scores.entries[i].score);
+            render::print(74 - strlen(str) * 6, y, str);
+            render::print(92, y, high_scores.entries[i].name);
+        }
+
+        if (button_just_pressed(fx::BTN_A) | button_just_pressed(fx::BTN_B)) {
+            init_level(1);
+        }
+
+    }
     else if (level_cleared && ++tick > 80) {
+        // next level
         init_level(level + 1);
     }
 }

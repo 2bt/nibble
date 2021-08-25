@@ -24,3 +24,30 @@ int8_t const SIN_TABLE[256] PROGMEM = {
     -39, -36, -33, -30, -27, -24, -21, -18, -15, -12, -9, -6, -3,
 };
 
+
+void itos(char* s, uint16_t n) {
+    static uint16_t const D[] = {
+        10000,
+        1000,
+        100,
+        10,
+        1,
+    };
+    uint16_t m = n;
+    for (int i = 0; i < 5; ++i) {
+        char c = '0';
+        uint16_t d = D[i] * 3;
+        while (m >= d) {
+            m -= d;
+            c += 3;
+        }
+        while (m >= D[i]) {
+            m -= D[i];
+            ++c;
+        }
+        if (m < n || i == COUNT_OF(D) - 1) *s++ = c;
+    }
+    *s = '\0';
+}
+
+

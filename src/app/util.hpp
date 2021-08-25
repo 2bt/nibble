@@ -39,6 +39,8 @@ extern int8_t const SIN_TABLE[256] PROGMEM;
 inline int8_t my_sin(uint8_t x) { return pgm_read_byte(SIN_TABLE + x); }
 inline int8_t my_cos(uint8_t x) { return my_sin(x + 64); }
 
+void itos(char* s, uint16_t n);
+
 
 extern uint8_t prev_button_bits;
 inline bool button_down(int b) {
@@ -52,9 +54,9 @@ inline bool button_just_pressed(int b) {
 struct Random {
     uint16_t seed;
 
-    uint32_t hash(uint32_t input, uint32_t key) {
+    uint16_t hash(uint32_t input, uint32_t key) {
         uint32_t h = input * key;
-        return ((h >> 16) ^ h) & 0xffff;
+        return (h >> 16) ^ h;
     }
 
     uint16_t rand() {
@@ -62,3 +64,40 @@ struct Random {
         return hash(seed, 0x2ab);
     }
 };
+
+
+
+struct HighScores {
+    enum { LEN = 10, CHARS = 3 };
+    struct Entry {
+        uint16_t score;
+        char     name[4];
+    };
+    Entry entries[LEN];
+
+    void reset() {
+        memset(entries, 0, sizeof(entries));
+    }
+    void add(char const* name, uint16_t score) {
+        for (int i = 0; i < LEN; ++i) {
+            Entry& e = entries[i];
+            if (score > e.score) {
+                for (int j = LEN - 1; j > i; --j) entries[j] = entries[j - 1];
+                e.score = score;
+                int l = strlen(name);
+                e.name[0] = name[0];
+                e.name[1] = l < 1 ? 0 : name[1];
+                e.name[2] = l < 2 ? 0 : name[2];
+                return;
+            }
+        }
+    }
+
+    bool load(char const* filename) {
+        return fx::try_load(filename, &entries, sizeof(entries));
+    }
+    void save(char const* filename) {
+        fx::store(filename, &entries, sizeof(entries));
+    }
+};
+
