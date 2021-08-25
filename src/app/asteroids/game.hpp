@@ -45,7 +45,14 @@ struct AsteroidsGame {
         int16_t vy;
     };
 
+    enum {
+        S_LEVEL_START,
+        S_NORMAL,
+        S_GAME_OVER,
+    };
+
     Random  random;
+    uint8_t state;
     int     tick;
     int     level;
 

@@ -5,6 +5,30 @@
 namespace {
 
 
+void itos(int n, char* s) {
+    int const D[] = {
+        1000000,
+        100000,
+        10000,
+        1000,
+        100,
+        10,
+        1,
+    };
+    int m = n;
+
+    for (int i = 0; i < 7; ++i) {
+        char c = '0';
+        while (m >= D[i]) {
+            m -= D[i];
+            ++c;
+        }
+        if (m < n || i == 6) *s++ = c;
+    }
+    *s = '\0';
+}
+
+
 void plot_line(int x0, int y0, int x1, int y1, uint8_t c) {
     int dx =  abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
     int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
@@ -31,6 +55,31 @@ enum {
 
 } // namespace
 
+
+void AsteroidsGame::init() {
+    score = 0;
+    init_level(1);
+}
+
+void AsteroidsGame::init_level(int l) {
+    level = l;
+    state = S_LEVEL_START;
+    tick = 0;
+    ship.x = ship.y = (63 << 9);
+    ship.vx = ship.vy = 0;
+    ship.ang = 0;
+    next_bullet = 0;
+    next_shape = 0;
+    next_particle = 0;
+    for (Asteroid& a : asteroids) a.health = 0;
+    for (Bullet& b : bullets) b.ttl = 0;
+    for (Particle& p : particles) p.ttl = 0;
+    for (int i = 0; i < level; ++i) {
+        if (i & 1) spawn_asteroid(0, random.rand(), 2);
+        else       spawn_asteroid(random.rand(), 0, 2);
+    }
+}
+
 void AsteroidsGame::spawn_asteroid(int x, int y, int size) {
     for (Asteroid& a : asteroids) {
         if (a.health > 0) continue;
@@ -38,13 +87,10 @@ void AsteroidsGame::spawn_asteroid(int x, int y, int size) {
         a.health = size + 1;
         a.shape  = next_shape;
         if (++next_shape == SHAPE_COUNT) next_shape = 0;
-
         a.x = x;
         a.y = y;
-
         uint8_t ang = random.rand();
         uint16_t v = (random.rand() >> (7 + size)) + 100;
-
         a.vx   = my_sin(ang) * v >> 8;
         a.vy   = my_cos(ang) * v >> 8;
         a.ang  = random.rand();
@@ -52,31 +98,6 @@ void AsteroidsGame::spawn_asteroid(int x, int y, int size) {
         return;
     }
 }
-
-void AsteroidsGame::init() {
-    score = 0;
-    init_level(1);
-}
-void AsteroidsGame::init_level(int l) {
-    level = l;
-    tick = 0;
-    ship.x = ship.y = (63 << 9);
-    ship.vx = ship.vy = 0;
-    ship.ang = 0;
-
-    next_bullet = 0;
-    next_shape = 0;
-    next_particle = 0;
-    for (Asteroid& a : asteroids) a.health = 0;
-    for (Bullet& b : bullets) b.ttl = 0;
-    for (Particle& p : particles) p.ttl = 0;
-
-    for (int i = 0; i < level; ++i) {
-        if (i & 1) spawn_asteroid(0, random.rand(), 2);
-        else       spawn_asteroid(random.rand(), 0, 2);
-    }
-}
-
 
 void AsteroidsGame::spawn_explosion(int x, int y, int size) {
     int count = 8 << size;
@@ -101,15 +122,23 @@ void AsteroidsGame::spawn_explosion(int x, int y, int size) {
     }
 }
 
-
 void AsteroidsGame::update() {
 
     // move ship
-    ship.ang += (button_down(fx::BTN_RIGHT) - button_down(fx::BTN_LEFT)) * 4;
+    int  dang   = 0;
+    bool thrust = false;
+    bool shoot  = false;
+
+    if (state == S_NORMAL) {
+        dang   = (button_down(fx::BTN_RIGHT) - button_down(fx::BTN_LEFT)) * 4;
+        thrust = button_down(fx::BTN_UP) || button_down(fx::BTN_A);
+        shoot  = button_just_pressed(fx::BTN_B);
+    }
+
+    ship.ang += dang;
     int si = my_sin(ship.ang);
     int co = my_cos(ship.ang);
 
-    bool thrust = button_down(fx::BTN_UP) || button_down(fx::BTN_A);
     if (thrust) {
         ship.vx += si * SPEED;
         ship.vy -= co * SPEED;
@@ -137,32 +166,48 @@ void AsteroidsGame::update() {
         }
     }
 
-    // draw ship
-    int8_t const POINTS[] = {
-        -10, -10,
-        0, -5,
-        10, -10,
-        0, 12,
-    };
-    int i = COUNT_OF(POINTS) - 2;
-    int x0 = ship.x + POINTS[i] * co + POINTS[i + 1] * si;
-    int y0 = ship.y + POINTS[i] * si - POINTS[i + 1] * co;
-    for (i = 0; i < COUNT_OF(POINTS); i += 2) {
-        int x1 = ship.x + POINTS[i] * co + POINTS[i + 1] * si;
-        int y1 = ship.y + POINTS[i] * si - POINTS[i + 1] * co;
-        plot_line(x0 >> 9, y0 >> 9, x1 >> 9, y1 >> 9, 7);
-        x0 = x1;
-        y0 = y1;
-    }
 
-    // shoot
-    if (button_just_pressed(fx::BTN_B)) {
-        Bullet& b = bullets[next_bullet];
-        if (++next_bullet >= MAX_BULLETS) next_bullet = 0;
-        b.ttl = 60;
-        b.ang = ship.ang;
-        b.x = x0;
-        b.y = y0;
+    if (state != S_GAME_OVER) {
+        // draw ship
+        int8_t const POINTS[] = {
+            -10, -10,
+            0, -5,
+            10, -10,
+            0, 12,
+        };
+        int i = COUNT_OF(POINTS) - 2;
+        int x0 = ship.x + POINTS[i] * co + POINTS[i + 1] * si;
+        int y0 = ship.y + POINTS[i] * si - POINTS[i + 1] * co;
+        for (i = 0; i < COUNT_OF(POINTS); i += 2) {
+            int x1 = ship.x + POINTS[i] * co + POINTS[i + 1] * si;
+            int y1 = ship.y + POINTS[i] * si - POINTS[i + 1] * co;
+            plot_line(x0 >> 9, y0 >> 9, x1 >> 9, y1 >> 9, 7);
+            x0 = x1;
+            y0 = y1;
+        }
+        if (thrust) {
+            for (int i = 0; i < 3; ++i) {
+                uint8_t a = ship.ang + (random.rand() & 31) - 15;
+                int si = my_sin(a);
+                int co = my_cos(a);
+
+                int y = -25 + (random.rand() & 15);
+
+                int x0 = ship.x + y * si;
+                int y0 = ship.y - y * co;
+                render::pixel((x0 >> 9) & 127, (y0 >> 9) & 127, 10);
+            }
+        }
+
+        // shoot
+        if (shoot) {
+            Bullet& b = bullets[next_bullet];
+            if (++next_bullet >= MAX_BULLETS) next_bullet = 0;
+            b.ttl = 60;
+            b.ang = ship.ang;
+            b.x = x0;
+            b.y = y0;
+        }
     }
 
     // bullets
@@ -178,21 +223,6 @@ void AsteroidsGame::update() {
         plot_line(x >> 9, y >> 9, b.x >> 9, b.y >> 9, 11);
         b.x &= (1 << 16) - 1;
         b.y &= (1 << 16) - 1;
-    }
-
-    // flames
-    if (thrust) {
-        for (int i = 0; i < 3; ++i) {
-            uint8_t a = ship.ang + (random.rand() & 31) - 15;
-            int si = my_sin(a);
-            int co = my_cos(a);
-
-            int y = -25 + (random.rand() & 15);
-
-            int x0 = ship.x + y * si;
-            int y0 = ship.y - y * co;
-            render::pixel((x0 >> 9) & 127, (y0 >> 9) & 127, 10);
-        }
     }
 
 
@@ -222,19 +252,23 @@ void AsteroidsGame::update() {
         uint8_t const SCALES[SHAPE_COUNT] = { 4, 8, 12 };
         uint8_t s = SCALES[a.size];
 
-        uint8_t color = 7;
-
         // ship collision
-        int dx = abs(ship.x - a.x);
-        int dy = abs(ship.y - a.y);
-        dx >>= 9;
-        dy >>= 9;
-        if (dx > 64) dx = fx::SCREEN_W - dx;
-        if (dy > 64) dx = fx::SCREEN_H - dx;
-        int r = (s + 2) * (s + 3);
-        if (dx * dx + dy * dy < r) {
-            color = 8;
+        if (state != S_GAME_OVER) {
+            int dx = abs(ship.x - a.x);
+            int dy = abs(ship.y - a.y);
+            dx >>= 9;
+            dy >>= 9;
+            if (dx > 64) dx = fx::SCREEN_W - dx;
+            if (dy > 64) dx = fx::SCREEN_H - dx;
+            int r = (s + 2) * (s + 3);
+            if (dx * dx + dy * dy < r) {
+                state = S_GAME_OVER;
+                spawn_explosion(ship.x, ship.y, 2);
+                spawn_explosion(ship.x, ship.y, 1);
+                spawn_explosion(ship.x, ship.y, 0);
+            }
         }
+
 
         // bullet collision
         for (Bullet& b : bullets) {
@@ -274,17 +308,11 @@ void AsteroidsGame::update() {
         for (i = 0; i < LEN; i += 2) {
             int x1 = a.x + POINTS[i] * co + POINTS[i + 1] * si;
             int y1 = a.y + POINTS[i] * si - POINTS[i + 1] * co;
-            plot_line(x0 >> 9, y0 >> 9, x1 >> 9, y1 >> 9, color);
+            plot_line(x0 >> 9, y0 >> 9, x1 >> 9, y1 >> 9, 7);
             x0 = x1;
             y0 = y1;
         }
     }
-    if (level_cleared && ++tick > 100) {
-        init_level(level + 1);
-        render::clear(8);
-        return;
-    }
-
 
     // particles
     for (Particle& p : particles) {
@@ -318,5 +346,26 @@ void AsteroidsGame::update() {
             if (s < score || i == 6)
             render::draw_glyph(i * 6 + 86, 1, c);
         }
+    }
+
+
+    if (state == S_LEVEL_START) {
+        if (++tick > 80) {
+            state = S_NORMAL;
+            tick = 0;
+        }
+        char str[12] = "LEVEL ";
+        itos(level, str + 6);
+        if (tick < 40 || (tick & 2)) render::print(43, 32, str);
+    }
+    else if (state == S_GAME_OVER) {
+        if (++tick > 40) {
+            render::print(37, 32, "GAME OVER");
+            // restart game
+            if (button_down(fx::BTN_A) | button_down(fx::BTN_B)) init();
+        }
+    }
+    else if (level_cleared && ++tick > 80) {
+        init_level(level + 1);
     }
 }
