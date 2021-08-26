@@ -31,14 +31,22 @@ void store(char const* filename, void const* data, int len) {
 
 } // namespace fx
 
+static long my_time;
+
 extern "C" void setup() {
     LittleFS.begin();
     nibble::init();
     app::init();
+    my_time = millis();
 }
 
 extern "C" void loop() {
     fx::button_bits = nibble::button_bits();
     app::update();
     nibble::flush(fx::pixels);
+
+    long t = my_time;
+    my_time = millis();
+    int d = t + 16 - my_time;
+    if (d > 0) delay(d);
 }

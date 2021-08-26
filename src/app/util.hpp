@@ -78,7 +78,7 @@ struct HighScores {
     void reset() {
         memset(entries, 0, sizeof(entries));
     }
-    void add(char const* name, uint16_t score) {
+    int add(char const* name, uint16_t score) {
         for (int i = 0; i < LEN; ++i) {
             Entry& e = entries[i];
             if (score > e.score) {
@@ -88,10 +88,13 @@ struct HighScores {
                 e.name[0] = name[0];
                 e.name[1] = l < 1 ? 0 : name[1];
                 e.name[2] = l < 2 ? 0 : name[2];
-                return;
+                return i;
             }
         }
+        return -1;
     }
+
+    bool is_high_score(uint16_t s) { return s > entries[LEN - 1].score; }
 
     bool load(char const* filename) {
         return fx::try_load(filename, &entries, sizeof(entries));

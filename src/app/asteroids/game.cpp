@@ -267,11 +267,7 @@ void AsteroidsGame::update() {
                 spawn_explosion(ship.x, ship.y, 0);
 
                 state = S_GAME_OVER;
-
-                // check for high score
-                if (score > high_scores.entries[9].score) {
-                    new_high_score = true;
-                }
+                new_high_score = high_scores.is_high_score(score);
             }
         }
 

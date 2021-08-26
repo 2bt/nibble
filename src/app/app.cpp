@@ -3,23 +3,8 @@
 #include "render.hpp"
 
 #include "asteroids/game.hpp"
+#include "snake/game.hpp"
 #include "worm/game.hpp"
-
-
-struct SnakeGame {
-    void init() {
-        render::clear(0);
-    }
-    void update() {
-        uint8_t* p = fx::pixels;
-        for (int i = 0; i < 256; ++i) {
-            uint16_t x = random.rand() & 0x3fff;
-            p[x] += random.rand() & 3;
-            p[x] &= 0xf;
-        }
-    }
-    Random random;
-};
 
 
 namespace {
