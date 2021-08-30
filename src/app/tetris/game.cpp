@@ -93,7 +93,7 @@ void TetrisGame::new_stone() {
 			stone_permutation[j] = a;
 		}
 	}
-
+    button = 0xff;
     stone = stone_permutation[stone_perm_pos];
     rot   = random.rand() & 3;
 }
@@ -127,13 +127,13 @@ void TetrisGame::paint_stone(uint8_t color) {
 
 void TetrisGame::update() {
 
-
-    if (button_just_pressed(fx::BTN_LEFT))  { button_tick = -1; button = fx::BTN_LEFT;  }
-    if (button_just_pressed(fx::BTN_RIGHT)) { button_tick = -1; button = fx::BTN_RIGHT; }
-    if (button_just_pressed(fx::BTN_DOWN))  { button_tick = -1; button = fx::BTN_DOWN;  }
-    if (button_just_pressed(fx::BTN_UP))    { button_tick = -1; button = fx::BTN_UP;    }
-    if (button_just_pressed(fx::BTN_A))     { button_tick = -1; button = fx::BTN_A;     }
-    if (button_just_pressed(fx::BTN_B))     { button_tick = -1; button = fx::BTN_B;     }
+    for (int i = 0; i < fx::BTN_COUNT; ++i) {
+        if (button_just_pressed(i)) {
+            button = i;
+            button_tick = -1;
+            break;
+        }
+    }
     if (fx::button_bits & (1 << button)) ++button_tick;
     else button = 0xff;
 
