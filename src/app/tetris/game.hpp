@@ -31,16 +31,16 @@ struct TetrisGame {
     uint16_t score;
     uint16_t lines;
     int tick;
-    int pos;
-    int rot;
-    bool drop;
-    int stone;
-    bool first_stone_frame;
+    int16_t pos;
+    uint8_t rot;
+    uint8_t drop;
+    uint8_t stone;
+    uint8_t first_stone_frame;
 
-    int stone_permutation[STONE_COUNT];
-    int stone_perm_pos;
+    uint8_t stone_permutation[STONE_COUNT];
+    int8_t  stone_perm_pos;
 
-    int button;
+    uint8_t button;
     int button_tick;
 
     uint8_t grid[GRID_W * GRID_H + 1];

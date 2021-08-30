@@ -100,13 +100,13 @@ void TetrisGame::new_stone() {
 
 bool TetrisGame::check_collision() {
     int8_t const* d = STONE_DATA + stone * 12 + rot * 3;
-    int16_t ps[] = {
+    int ps[] = {
         pos,
         pos + (int8_t) pgm_read_byte(d + 0),
         pos + (int8_t) pgm_read_byte(d + 1),
         pos + (int8_t) pgm_read_byte(d + 2),
     };
-    for (int16_t p : ps) {
+    for (int p : ps) {
         if (p >= 0 && grid[p] > 0) return true;
     }
     return false;
@@ -114,13 +114,13 @@ bool TetrisGame::check_collision() {
 
 void TetrisGame::paint_stone(uint8_t color) {
     int8_t const* d = STONE_DATA + stone * 12 + rot * 3;
-    int16_t ps[] = {
+    int ps[] = {
         pos,
         pos + (int8_t) pgm_read_byte(d + 0),
         pos + (int8_t) pgm_read_byte(d + 1),
         pos + (int8_t) pgm_read_byte(d + 2),
     };
-    for (int16_t p : ps) {
+    for (int p : ps) {
         if (p >= 0) grid[p] = color;
     }
 }
@@ -135,13 +135,13 @@ void TetrisGame::update() {
     if (button_just_pressed(fx::BTN_A))     { button_tick = -1; button = fx::BTN_A;     }
     if (button_just_pressed(fx::BTN_B))     { button_tick = -1; button = fx::BTN_B;     }
     if (fx::button_bits & (1 << button)) ++button_tick;
-    else button = -1;
+    else button = 0xff;
 
     int dx = 0;
     int dy = 0;
     int dr = 0;
     if (drop) dy = 1;
-    else if (button != -1 && (button_tick & 3) == 0 && button_tick != 4 && button_tick != 8) {
+    else if (button != 0xff && (button_tick & 3) == 0 && button_tick != 4 && button_tick != 8) {
         dx = (button == fx::BTN_RIGHT) - (button == fx::BTN_LEFT);
         dy = button == fx::BTN_DOWN;
         dr = (button == fx::BTN_A) - (button == fx::BTN_UP);
