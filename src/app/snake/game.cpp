@@ -79,10 +79,8 @@ void SnakeGame::update() {
         }
         else {
             if (--tick <= 0) {
-
                 tick = target_len + (random.rand() & 31);
-
-                int r = random.rand() & 3;
+                int r = (random.rand() * 7 >> 4) & 3;
                 if (dir != 2 && r == 1) dir = 0;
                 if (dir != 0 && r == 2) dir = 2;
                 if (dir != 3 && r == 3) dir = 1;

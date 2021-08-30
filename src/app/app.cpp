@@ -4,15 +4,22 @@
 
 #include "asteroids/game.hpp"
 #include "snake/game.hpp"
-#include "worm/game.hpp"
+#include "tetris/game.hpp"
 
 
 namespace {
 
 char const T1[] PROGMEM = "ASTEROIDS";
 char const T2[] PROGMEM = "SNAKE";
-char const T3[] PROGMEM = "WORM";
+char const T3[] PROGMEM = "TETRIS";
 char const* const TITLES[] PROGMEM = { T1, T2, T3, };
+
+enum {
+    G_MENU = -1,
+    G_ASTEROIDS,
+    G_SNAKE,
+    G_TETRIS,
+};
 
 
 int current_game;
@@ -97,7 +104,7 @@ union GameUnion {
     Menu          menu;
     AsteroidsGame asteroids;
     SnakeGame     snake;
-    WormGame      worm;
+    TetrisGame    tetris;
 } game_union;
 
 
@@ -111,7 +118,7 @@ void app::init(int game) {
     case G_MENU:      game_union.menu.init();      break;
     case G_ASTEROIDS: game_union.asteroids.init(); break;
     case G_SNAKE:     game_union.snake.init();     break;
-    case G_WORM:      game_union.worm.init();      break;
+    case G_TETRIS:    game_union.tetris.init();    break;
     default: break;
     }
     current_game = game;
@@ -123,7 +130,7 @@ void app::update() {
     case G_MENU:      game_union.menu.update();      break;
     case G_ASTEROIDS: game_union.asteroids.update(); break;
     case G_SNAKE:     game_union.snake.update();     break;
-    case G_WORM:      game_union.worm.update();      break;
+    case G_TETRIS:    game_union.tetris.update();    break;
     default: break;
     }
     if (current_game != G_MENU && button_just_pressed(fx::BTN_C)) app::init(G_MENU);

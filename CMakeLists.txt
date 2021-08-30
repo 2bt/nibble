@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(nibble)
 
-#add_compile_options(-std=c++17 -Wall -O2)
-add_compile_options(-std=c++17 -Wall -Og -g)
+add_compile_options(-std=c++17 -Wall -O2 -Wno-narrowing)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL REQUIRED
@@ -19,7 +18,7 @@ add_executable(nibble
 
     src/app/asteroids/game.cpp
     src/app/snake/game.cpp
-    src/app/worm/game.cpp
+    src/app/tetris/game.cpp
     )
 
 target_include_directories(nibble PRIVATE
