@@ -2,23 +2,35 @@
 #include "app.hpp"
 #include "render.hpp"
 
+
 #include "asteroids/game.hpp"
 #include "snake/game.hpp"
 #include "tetris/game.hpp"
+#include "wolf/game.hpp"
+
+
+#define FOR_ALL_GAMES(X) \
+    X(Asteroids) \
+    X(Snake)     \
+    X(Tetris)    \
+    X(Wolf)
+
+
+#define DEFINE_TITLE_STRING(name) char const T_##name[] PROGMEM = #name;
+#define TITLE_STRING(name) T_##name,
+#define GAME_ENUM(name)    G_##name,
+#define DEFINE_GAME_INSTANCE(name) name##Game name##_game;
+#define INIT_GAME(name)   case G_##name: game_union.name##_game.init(); break;
+#define UPDATE_GAME(name) case G_##name: game_union.name##_game.update(); break;
 
 
 namespace {
 
-char const T1[] PROGMEM = "ASTEROIDS";
-char const T2[] PROGMEM = "SNAKE";
-char const T3[] PROGMEM = "TETRIS";
-char const* const TITLES[] PROGMEM = { T1, T2, T3, };
-
+FOR_ALL_GAMES(DEFINE_TITLE_STRING)
+char const* const TITLES[] PROGMEM = { FOR_ALL_GAMES(TITLE_STRING) };
 enum {
     G_MENU = -1,
-    G_ASTEROIDS,
-    G_SNAKE,
-    G_TETRIS,
+    FOR_ALL_GAMES(GAME_ENUM)
 };
 
 
@@ -74,7 +86,7 @@ void Menu::update() {
     }
 
     // darken
-    static uint8_t const DARK[] = { 0, 0, 1, 1, 2, 1, 5, 6, 2, 4, 9, 3, 1, 1, 2, 5 };
+    uint8_t const DARK[] = { 0, 0, 1, 1, 2, 1, 5, 6, 2, 4, 9, 3, 1, 1, 2, 5 };
     p = fx::pixels + 56 * fx::SCREEN_W;
     for (int i = 0; i < fx::SCREEN_W * 16; ++i, ++p) *p = DARK[*p];
 
@@ -85,12 +97,14 @@ void Menu::update() {
         if (y > 16)  y = y / 2 + 8;
         if (y < -16) y = y / 2 - 8;
 
-        char line[16];
-        strcpy_P(line, TITLES[i]);
-
-        render::print(28, 61 + y, line);
+        int x = 28;
+        for (char const* p = TITLES[i];; ++p) {
+            char c = pgm_read_byte(p);
+            if (!c) break;
+            render::draw_glyph(x, 61 + y, toupper(c));
+            x += 6;
+        }
     }
-
 
     // start game
     if (fx::button_bits & ((1 << fx::BTN_A) | (1 << fx::BTN_B))) {
@@ -101,24 +115,18 @@ void Menu::update() {
 
 
 union GameUnion {
-    Menu          menu;
-    AsteroidsGame asteroids;
-    SnakeGame     snake;
-    TetrisGame    tetris;
+    Menu menu;
+    FOR_ALL_GAMES(DEFINE_GAME_INSTANCE)
 } game_union;
 
 
 } // namespace
 
 
-
 void app::init(int game) {
-
     switch (game) {
-    case G_MENU:      game_union.menu.init();      break;
-    case G_ASTEROIDS: game_union.asteroids.init(); break;
-    case G_SNAKE:     game_union.snake.init();     break;
-    case G_TETRIS:    game_union.tetris.init();    break;
+    case G_MENU: game_union.menu.init(); break;
+    FOR_ALL_GAMES(INIT_GAME)
     default: break;
     }
     current_game = game;
@@ -127,10 +135,8 @@ void app::init(int game) {
 
 void app::update() {
     switch (current_game) {
-    case G_MENU:      game_union.menu.update();      break;
-    case G_ASTEROIDS: game_union.asteroids.update(); break;
-    case G_SNAKE:     game_union.snake.update();     break;
-    case G_TETRIS:    game_union.tetris.update();    break;
+    case G_MENU: game_union.menu.update(); break;
+    FOR_ALL_GAMES(UPDATE_GAME)
     default: break;
     }
     if (current_game != G_MENU && button_just_pressed(fx::BTN_C)) app::init(G_MENU);

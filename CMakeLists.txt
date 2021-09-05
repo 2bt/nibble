@@ -19,6 +19,7 @@ add_executable(nibble
     src/app/asteroids/game.cpp
     src/app/snake/game.cpp
     src/app/tetris/game.cpp
+    src/app/wolf/game.cpp
     )
 
 target_include_directories(nibble PRIVATE

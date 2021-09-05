@@ -74,7 +74,6 @@ void TetrisGame::new_game() {
     current_letter = 0;
     new_high_score = false;
     stone_perm_pos = 0;
-    drop = false;
     new_stone();
 }
 
@@ -140,15 +139,11 @@ void TetrisGame::update() {
     int dx = 0;
     int dy = 0;
     int dr = 0;
-    if (drop) dy = 1;
+    if (button == fx::BTN_B) dy = 1;
     else if (button != 0xff && (button_tick & 3) == 0 && button_tick != 4 && button_tick != 8) {
         dx = (button == fx::BTN_RIGHT) - (button == fx::BTN_LEFT);
         dy = button == fx::BTN_DOWN;
         dr = (button == fx::BTN_A) - (button == fx::BTN_UP);
-        if (button == fx::BTN_B) {
-            drop = true;
-            dy = 1;
-        }
     }
     else if (++tick > 60) dy = 1;
     if (dy) tick = 0;
@@ -166,7 +161,6 @@ void TetrisGame::update() {
     rot = (rot + 4 + dr) & 0x3;
     bool collision = check_collision();
     if (collision) {
-        drop = false;
         pos = old_pos;
         rot = old_rot;
     }

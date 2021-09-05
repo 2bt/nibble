@@ -33,7 +33,6 @@ struct TetrisGame {
     int tick;
     int16_t pos;
     uint8_t rot;
-    uint8_t drop;
     uint8_t stone;
     uint8_t first_stone_frame;
 

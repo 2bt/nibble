@@ -25,12 +25,14 @@ inline int strlen(char const* str) {
     while (*str++) ++l;
     return l;
 }
+inline int toupper(int c) { return c >= 'a' && c <= 'z' ? c - 32 : c; }
 
 #else
 
 #include <cstdint>
 #include <cstring>
 #include <algorithm>
+#include <ctype.h>
 
 #endif
 
